@@ -1,212 +1,417 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Capacitación Pro v1.1 - Entrenador Inteligente</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capacitación Pro · Hito 2 Local</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>tailwind.config={theme:{extend:{boxShadow:{soft:'0 20px 60px rgba(15,23,42,.12)'}}}}</script>
+  <style>
+    .timer-ok{background:#ecfdf5;color:#047857}
+    .timer-warn{background:#fffbeb;color:#b45309}
+    .timer-danger{background:#fff1f2;color:#be123c;animation:pulse 1s infinite}
+    @keyframes pulse{50%{opacity:.65}}
+    .bar{transition:width .3s ease}
+  </style>
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-900">
-  <main class="mx-auto max-w-7xl px-4 py-6 sm:py-10">
-    <section class="overflow-hidden rounded-3xl bg-white shadow-soft">
-      <div class="bg-gradient-to-r from-slate-950 via-blue-950 to-sky-700 px-6 py-8 text-white sm:px-10">
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p class="text-sm font-semibold uppercase tracking-[.25em] text-sky-200">Capacitación Pro</p>
-            <h1 class="mt-3 text-3xl font-black sm:text-4xl">Entrenador inteligente de transporte</h1>
-            <p id="cabeceraSub" class="mt-3 max-w-3xl text-slate-200">Configura fecha de inicio, fecha de examen y disponibilidad. La app crea el plan diario automáticamente.</p>
-          </div>
-          <div class="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
-            <div class="rounded-2xl bg-white/10 p-4 backdrop-blur"><p class="text-xs uppercase tracking-widest text-sky-100">Preguntas</p><p id="totalPreguntas" class="mt-1 text-3xl font-black">...</p></div>
-            <div class="rounded-2xl bg-white/10 p-4 backdrop-blur"><p class="text-xs uppercase tracking-widest text-sky-100">Días examen</p><p id="diasExamen" class="mt-1 text-3xl font-black">...</p></div>
-            <div class="rounded-2xl bg-white/10 p-4 backdrop-blur"><p class="text-xs uppercase tracking-widest text-sky-100">Meta</p><p id="objetivoNota" class="mt-1 text-3xl font-black">--%</p></div>
-            <div class="rounded-2xl bg-white/10 p-4 backdrop-blur"><p class="text-xs uppercase tracking-widest text-sky-100">Preparación</p><p id="prepTop" class="mt-1 text-3xl font-black">--%</p></div>
-          </div>
+<main class="mx-auto max-w-7xl p-3 sm:p-7">
+  <section class="overflow-hidden rounded-3xl bg-white shadow-xl">
+    <header class="bg-gradient-to-r from-slate-950 via-blue-950 to-sky-700 p-5 text-white sm:p-8">
+      <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p class="text-xs font-black uppercase tracking-[.25em] text-sky-200">Capacitación Pro · Hito 2 Local</p>
+          <h1 class="mt-2 text-3xl font-black sm:text-4xl">Entrenador inteligente</h1>
+          <p id="headerSub" class="mt-2 text-slate-200">Todo tu seguimiento se guarda localmente en este navegador.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div class="rounded-2xl bg-white/10 p-3 text-center"><p class="text-xs">Preguntas</p><p id="topQuestions" class="text-2xl font-black">…</p></div>
+          <div class="rounded-2xl bg-white/10 p-3 text-center"><p class="text-xs">Casos</p><p id="topCases" class="text-2xl font-black">…</p></div>
+          <div class="rounded-2xl bg-white/10 p-3 text-center"><p class="text-xs">Días examen</p><p id="topDays" class="text-2xl font-black">—</p></div>
+          <div class="rounded-2xl bg-white/10 p-3 text-center"><p class="text-xs">Preparación</p><p id="topPrep" class="text-2xl font-black">0%</p></div>
         </div>
       </div>
+    </header>
 
-      <div id="wizard" class="hidden p-6 sm:p-10">
-        <div class="mx-auto max-w-3xl rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
-          <p class="text-sm font-black uppercase tracking-wide text-sky-700">Primera configuración</p>
-          <h2 class="mt-2 text-3xl font-black">Crea tu plan de preparación</h2>
-          <p class="mt-2 text-slate-600">Esta configuración sirve para ti o para cualquier persona que use la app. Después se puede modificar desde Configuración.</p>
-          <div class="mt-6 grid gap-4 sm:grid-cols-2">
-            <label class="block"><span class="text-sm font-bold text-slate-700">Fecha de inicio</span><input id="cfgInicio" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"></label>
-            <label class="block"><span class="text-sm font-bold text-slate-700">Fecha de examen</span><input id="cfgExamen" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"></label>
-            <label class="block"><span class="text-sm font-bold text-slate-700">Fecha objetivo de temario dominado</span><input id="cfgDominio" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><span class="mt-1 block text-xs text-slate-500">Recomendado: 1 mes antes del examen.</span></label>
-            <label class="block"><span class="text-sm font-bold text-slate-700">Tiempo disponible al día</span><select id="cfgMinutos" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="30">30 minutos</option><option value="45">45 minutos</option><option value="60" selected>60 minutos</option><option value="90">90 minutos</option><option value="120">2 horas</option></select></label>
-            <label class="block"><span class="text-sm font-bold text-slate-700">Objetivo de nota</span><select id="cfgObjetivo" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="70">Aprobar con margen (70%)</option><option value="80">Sólido (80%)</option><option value="90" selected>Muy seguro (90%)</option><option value="95">Excelencia (95%)</option></select></label>
-            <label class="block"><span class="text-sm font-bold text-slate-700">Días de estudio/semana</span><select id="cfgDiasSemana" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="5">5 días</option><option value="6" selected>6 días</option><option value="7">7 días</option></select></label>
-          </div>
-          <div class="mt-5 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
-            <p class="text-sm font-black text-slate-700">Estrategia incluida</p>
-            <p class="mt-1 text-sm text-slate-600">Antes de la fecha de dominio: completar todos los tests al menos una vez y repetir los tests débiles 3-4 veces. Después: simulacros oficiales de 200 preguntas, repaso de fallos y consolidación.</p>
-          </div>
-          <button id="btnGuardarConfig" class="mt-6 w-full rounded-xl bg-sky-600 px-6 py-4 font-black text-white hover:bg-sky-700">Crear mi plan</button>
+    <div id="setup" class="hidden p-5 sm:p-8">
+      <div class="mx-auto max-w-3xl rounded-3xl border bg-slate-50 p-6">
+        <p class="text-sm font-black uppercase tracking-wide text-sky-700">Configuración inicial</p>
+        <h2 class="mt-2 text-3xl font-black">Crea tu plan local</h2>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2">
+          <label><span class="text-sm font-bold">Nombre</span><input id="cfgName" class="mt-2 w-full rounded-xl border px-4 py-3" value="José Luis"></label>
+          <label><span class="text-sm font-bold">Fecha de examen</span><input id="cfgExam" type="date" class="mt-2 w-full rounded-xl border px-4 py-3" value="2026-11-01"></label>
+          <label><span class="text-sm font-bold">Minutos diarios</span><select id="cfgMinutes" class="mt-2 w-full rounded-xl border px-4 py-3"><option>30</option><option>60</option><option selected>90</option><option>120</option></select></label>
+          <label><span class="text-sm font-bold">Días de estudio/semana</span><select id="cfgDays" class="mt-2 w-full rounded-xl border px-4 py-3"><option>5</option><option selected>6</option><option>7</option></select></label>
         </div>
+        <button id="saveSetup" class="mt-6 w-full rounded-xl bg-sky-600 px-5 py-4 font-black text-white">Crear mi plan</button>
       </div>
+    </div>
 
-      <div id="app" class="hidden grid gap-6 p-6 lg:grid-cols-[380px,1fr] sm:p-10">
-        <aside class="space-y-4">
-          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <p class="text-sm font-black uppercase tracking-wide text-slate-500">Modo</p>
-            <div class="mt-3 grid gap-2">
-              <button id="btnModoPlan" class="modo rounded-xl bg-slate-950 px-4 py-3 text-left font-bold text-white">🧠 Plan de hoy</button>
-              <button id="btnModoTema" class="modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700">📚 Tests por tema</button>
-              <button id="btnModoSimulacro" class="modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700">⏱️ Simulacro real</button>
-              <button id="btnModoHistorico" class="modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700">📈 Histórico</button>
-              <button id="btnModoErrores" class="modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700">🎯 Mis errores</button>
-              <button id="btnModoConfig" class="modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700">⚙️ Configuración</button>
+    <div id="app" class="hidden grid gap-5 p-4 lg:grid-cols-[330px,1fr] sm:p-7">
+      <aside class="space-y-4">
+        <div class="rounded-2xl border bg-slate-50 p-4">
+          <p class="text-xs font-black uppercase tracking-wide text-slate-500">Navegación</p>
+          <div class="mt-3 grid gap-2">
+            <button class="nav rounded-xl bg-slate-950 px-4 py-3 text-left font-bold text-white" data-view="dashboard">🏠 Dashboard</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="tests">📚 Tests por tema</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="cases">🧩 Casos prácticos</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="simulation">⏱️ Simulacro oficial</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="errors">❌ Mis errores</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="history">📈 Histórico</button>
+            <button class="nav rounded-xl border bg-white px-4 py-3 text-left font-bold" data-view="settings">⚙️ Configuración</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="rounded-2xl bg-emerald-50 p-3 text-center"><p class="text-xs font-bold text-emerald-700">Aciertos</p><p id="statOk" class="text-2xl font-black text-emerald-700">0</p></div>
+          <div class="rounded-2xl bg-rose-50 p-3 text-center"><p class="text-xs font-bold text-rose-700">Fallos</p><p id="statKo" class="text-2xl font-black text-rose-700">0</p></div>
+          <div class="rounded-2xl bg-indigo-50 p-3 text-center"><p class="text-xs font-bold text-indigo-700">Nota</p><p id="statScore" class="text-2xl font-black text-indigo-700">0</p></div>
+        </div>
+      </aside>
+
+      <section class="min-h-[690px] rounded-2xl border bg-white p-4 sm:p-7">
+        <div id="view-dashboard">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p id="greeting" class="text-sm font-black uppercase tracking-wide text-sky-700"></p>
+              <h2 class="mt-1 text-3xl font-black">Tu preparación de hoy</h2>
+              <p id="dashboardSub" class="mt-2 text-slate-600"></p>
+            </div>
+            <div class="rounded-2xl bg-slate-950 p-4 text-center text-white">
+              <p class="text-xs uppercase tracking-wide">Índice de preparación</p>
+              <p id="prepIndex" class="text-4xl font-black">0</p>
+              <p class="text-xs text-slate-300">sobre 100</p>
             </div>
           </div>
-
-          <div id="panelTema" class="hidden rounded-2xl border border-slate-200 bg-slate-50 p-5">
-            <label class="text-sm font-bold text-slate-700">1. Tema</label><select id="temaSelect" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold"></select>
-            <label class="mt-4 block text-sm font-bold text-slate-700">2. Test</label><select id="testSelect" class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 font-semibold"></select>
-            <p id="testDetalle" class="mt-2 text-xs font-semibold text-slate-500"></p>
-            <button id="btnNuevoTest" class="mt-4 w-full rounded-xl bg-sky-600 px-5 py-3 font-bold text-white">Iniciar test</button>
+          <div class="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <button id="showFormula" class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-2 font-black text-sky-800">¿Cómo se calcula?</button>
+            <span class="text-slate-500">Las métricas se basan en cobertura real, resultados recientes, casos y simulacros.</span>
           </div>
-
-          <div class="grid grid-cols-3 gap-3"><div class="rounded-2xl bg-emerald-50 p-5 text-center ring-1 ring-emerald-100"><p class="text-sm font-bold text-emerald-700">Aciertos</p><p id="aciertos" class="text-4xl font-black text-emerald-700">0</p></div><div class="rounded-2xl bg-rose-50 p-5 text-center ring-1 ring-rose-100"><p class="text-sm font-bold text-rose-700">Fallos</p><p id="fallos" class="text-4xl font-black text-rose-700">0</p></div><div class="rounded-2xl bg-indigo-50 p-5 text-center ring-1 ring-indigo-100"><p class="text-sm font-bold text-indigo-700">Nota</p><p id="notaActual" class="text-4xl font-black text-indigo-700">0</p></div></div>
-          <div class="rounded-2xl border border-slate-200 p-5"><div class="flex justify-between text-sm font-bold text-slate-700"><span>Progreso</span><span id="progresoTexto">0/50</span></div><div class="mt-3 h-3 overflow-hidden rounded-full bg-slate-200"><div id="barraProgreso" class="h-full w-0 rounded-full bg-sky-600 transition-all"></div></div><p id="porcentaje" class="mt-3 text-sm text-slate-500">Empieza un test para ver tu porcentaje.</p><p id="temporizador" class="mt-3 hidden rounded-xl bg-amber-50 px-3 py-2 text-center text-lg font-black text-amber-800 ring-1 ring-amber-100">90:00</p></div>
-          <div class="rounded-2xl border border-slate-200 p-5"><p class="text-sm font-bold text-slate-700">Histórico rápido</p><p id="historicoResumen" class="mt-1 text-xs text-slate-500">Todavía no hay tests guardados.</p><div id="graficoEvolucion" class="mt-4 flex h-24 items-end gap-2 rounded-xl bg-slate-50 p-3"></div></div>
-        </aside>
-
-        <section class="min-h-[650px] rounded-2xl border border-slate-200 bg-white p-5 sm:p-7">
-          <div id="vistaPlan">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 class="text-3xl font-black">Plan inteligente de hoy</h2><p id="planSubtitulo" class="mt-2 text-slate-600"></p></div><button id="btnRecalcularPlan" class="rounded-xl border border-slate-300 px-4 py-3 font-bold hover:bg-slate-50">Actualizar plan</button></div>
-            <div class="mt-6 grid gap-4 lg:grid-cols-4"><div class="rounded-2xl bg-sky-50 p-5 ring-1 ring-sky-100"><p class="text-sm font-bold text-sky-700">Preparación</p><p id="planPreparacion" class="mt-2 text-3xl font-black text-sky-800">--%</p></div><div class="rounded-2xl bg-emerald-50 p-5 ring-1 ring-emerald-100"><p class="text-sm font-bold text-emerald-700">Tests completados</p><p id="planCobertura" class="mt-2 text-3xl font-black text-emerald-800">--%</p></div><div class="rounded-2xl bg-amber-50 p-5 ring-1 ring-amber-100"><p class="text-sm font-bold text-amber-700">Fase</p><p id="planFase" class="mt-2 text-2xl font-black text-amber-800">--</p></div><div class="rounded-2xl bg-violet-50 p-5 ring-1 ring-violet-100"><p class="text-sm font-bold text-violet-700">Trabajo hoy</p><p id="planTrabajo" class="mt-2 text-3xl font-black text-violet-800">--</p></div></div>
-            <div class="mt-6 rounded-2xl border border-slate-200 p-5"><h3 class="text-xl font-black">Sesión recomendada</h3><div id="sesionHoy" class="mt-4 grid gap-3"></div></div>
-            <div class="mt-6 rounded-2xl border border-slate-200 p-5"><h3 class="text-xl font-black">Roadmap automático</h3><div id="roadmap" class="mt-4 grid gap-3 sm:grid-cols-3"></div></div>
-            <div class="mt-6 rounded-2xl border border-slate-200 p-5"><h3 class="text-xl font-black">Próximos 14 días</h3><div id="calendarioPlan" class="mt-4 grid gap-2"></div></div>
+          <div id="formulaBox" class="mt-4 hidden rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm leading-relaxed text-slate-700">
+            <p class="font-black text-sky-900">Cálculo de los indicadores</p>
+            <p class="mt-2"><strong>Cobertura de tests:</strong> tests distintos realizados ÷ 20.</p>
+            <p class="mt-1"><strong>Dominio del tema:</strong> media de los últimos 5 resultados de ese tema.</p>
+            <p class="mt-1"><strong>Dominio global de tests:</strong> media del dominio de los 8 temas.</p>
+            <p class="mt-1"><strong>Casos prácticos:</strong> combinación de cobertura y resultado medio en casos.</p>
+            <p class="mt-1"><strong>Simulacros:</strong> media de los simulacros realizados.</p>
+            <p class="mt-1"><strong>Preparación global:</strong> 40% cobertura, 30% dominio, 20% casos y 10% simulacros.</p>
           </div>
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div class="rounded-2xl bg-sky-50 p-4"><p class="text-xs font-bold text-sky-700">Dominio test</p><p id="dashTest" class="mt-1 text-3xl font-black text-sky-800">0%</p></div>
+            <div class="rounded-2xl bg-violet-50 p-4"><p class="text-xs font-bold text-violet-700">Dominio casos</p><p id="dashCases" class="mt-1 text-3xl font-black text-violet-800">0%</p></div>
+            <div class="rounded-2xl bg-amber-50 p-4"><p class="text-xs font-bold text-amber-700">Simulacros</p><p id="dashSims" class="mt-1 text-3xl font-black text-amber-800">0</p></div>
+            <div class="rounded-2xl bg-emerald-50 p-4"><p class="text-xs font-bold text-emerald-700">Ritmo</p><p id="dashPace" class="mt-1 text-3xl font-black text-emerald-800">—</p></div>
+            <div class="rounded-2xl bg-rose-50 p-4"><p class="text-xs font-bold text-rose-700">Errores activos</p><p id="dashErrors" class="mt-1 text-3xl font-black text-rose-800">0</p></div>
+          </div>
+          <div class="mt-6 grid gap-5 xl:grid-cols-[1.25fr,.75fr]">
+            <div class="rounded-2xl border p-5">
+              <div class="flex items-center justify-between"><h3 class="text-xl font-black">Entrenamiento recomendado</h3><span id="todayStatus" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-black"></span></div>
+              <div id="todayPlan" class="mt-4 grid gap-3"></div>
+              <div id="extraTrack" class="mt-5 hidden rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-200">
+                <p class="font-black text-amber-900">⭐ Extra Track</p>
+                <div id="extraItems" class="mt-3 grid gap-2"></div>
+              </div>
+            </div>
+            <div class="rounded-2xl border p-5">
+              <h3 class="text-xl font-black">Coach local</h3>
+              <p id="coachMessage" class="mt-3 rounded-2xl bg-slate-50 p-4 font-semibold leading-relaxed text-slate-700"></p>
+              <div class="mt-5"><p class="text-sm font-black">Racha de estudio</p><p id="streak" class="mt-1 text-3xl font-black text-orange-600">0 días</p></div>
+            </div>
+          </div>
+          <div class="mt-6 rounded-2xl border p-5">
+            <h3 class="text-xl font-black">Dominio por tema</h3>
+            <div id="topicProgress" class="mt-4 grid gap-3"></div>
+          </div>
+        </div>
 
-          <div id="vistaTema" class="hidden"><div class="flex min-h-[260px] flex-col items-center justify-center text-center"><div class="mb-5 rounded-full bg-sky-100 p-5 text-5xl">🚚</div><h2 class="text-2xl font-black">Elige un tema y un test fijo</h2><p class="mt-3 max-w-xl text-slate-600">Cada tema tiene 20 tests de 50 preguntas. El histórico queda guardado por tema y número de test.</p></div><div id="dominioTema" class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5"></div></div>
-          <div id="vistaSimulacro" class="hidden"><h2 class="text-3xl font-black">Simulacro de examen real</h2><p class="mt-2 text-slate-600">200 preguntas aleatorias de todos los temas con temporizador de 90 minutos.</p><div class="mt-6 grid gap-4 sm:grid-cols-3"><div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200"><p class="text-sm font-bold text-slate-500">Preguntas</p><p class="mt-2 text-3xl font-black">200</p></div><div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200"><p class="text-sm font-bold text-slate-500">Tiempo</p><p class="mt-2 text-3xl font-black">90 min</p></div><div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200"><p class="text-sm font-bold text-slate-500">Modo</p><p class="mt-2 text-3xl font-black">Real</p></div></div><button id="btnIniciarSimulacro" class="mt-6 rounded-xl bg-amber-500 px-6 py-3 font-black text-white hover:bg-amber-600">Iniciar simulacro</button></div>
-          <div id="vistaHistorico" class="hidden"><div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 class="text-3xl font-black">Histórico y evolución</h2><p class="mt-2 text-slate-600">Resultados por tema, test y simulacros.</p></div><button id="btnBorrarHistorico" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 font-bold text-rose-700">Borrar histórico</button></div><div id="tarjetasHistorico" class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div><div class="mt-6 overflow-hidden rounded-2xl border border-slate-200"><div class="grid grid-cols-6 bg-slate-50 px-4 py-3 text-xs font-black uppercase tracking-wide text-slate-500"><span>Fecha</span><span>Modo</span><span>%</span><span>Nota</span><span>Preguntas</span><span>Duración</span></div><div id="tablaHistorico" class="divide-y divide-slate-100"></div></div></div>
-          <div id="vistaErrores" class="hidden"><div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 class="text-3xl font-black">Mis errores y pendientes</h2><p class="mt-2 text-slate-600">Repasa preguntas falladas y no contestadas. Se empezará a alimentar con los tests que hagas desde esta versión.</p></div></div><div id="panelErrores" class="mt-6 grid gap-4"></div></div>
-          <div id="vistaConfig" class="hidden"><h2 class="text-3xl font-black">Configuración del plan</h2><p class="mt-2 text-slate-600">Cambia las fechas o disponibilidad y el plan se recalculará automáticamente.</p><div class="mt-6 grid gap-4 sm:grid-cols-2"><label><span class="text-sm font-bold">Inicio</span><input id="editInicio" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"></label><label><span class="text-sm font-bold">Examen</span><input id="editExamen" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"></label><label><span class="text-sm font-bold">Temario dominado antes de</span><input id="editDominio" type="date" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"></label><label><span class="text-sm font-bold">Minutos/día</span><select id="editMinutos" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="30">30</option><option value="45">45</option><option value="60">60</option><option value="90">90</option><option value="120">120</option></select></label><label><span class="text-sm font-bold">Objetivo nota</span><select id="editObjetivo" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="70">70%</option><option value="80">80%</option><option value="90">90%</option><option value="95">95%</option></select></label><label><span class="text-sm font-bold">Días/semana</span><select id="editDiasSemana" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold"><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></label></div><button id="btnActualizarConfig" class="mt-6 rounded-xl bg-sky-600 px-6 py-3 font-black text-white">Guardar configuración</button><button id="btnResetConfig" class="ml-2 mt-6 rounded-xl border border-slate-300 px-6 py-3 font-bold">Reiniciar asistente</button></div>
+        <div id="view-tests" class="hidden">
+          <h2 class="text-3xl font-black">Tests por tema</h2>
+          <p class="mt-2 text-slate-600">20 tests de 50 preguntas. Tiempo objetivo: 20 minutos.</p>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <label><span class="text-sm font-bold">Tema</span><select id="testTopic" class="mt-2 w-full rounded-xl border px-4 py-3"></select></label>
+            <label><span class="text-sm font-bold">Test</span><select id="testNumber" class="mt-2 w-full rounded-xl border px-4 py-3"></select></label>
+          </div>
+          <p id="testInfo" class="mt-3 text-sm text-slate-500"></p>
+          <button id="startTest" class="mt-5 rounded-xl bg-sky-600 px-6 py-3 font-black text-white">Iniciar test · 20 min</button>
+        </div>
 
-          <div id="vistaTest" class="hidden"><div class="flex flex-col gap-3 border-b border-slate-200 pb-5 sm:flex-row sm:items-center sm:justify-between"><div><p id="metaPregunta" class="text-sm font-bold uppercase tracking-wide text-sky-700"></p><h2 id="codigoPregunta" class="mt-1 text-xl font-black"></h2></div><div class="flex gap-2"><button id="btnAnterior" class="rounded-xl border border-slate-300 px-4 py-2 font-bold">Anterior</button><button id="btnSiguiente" class="rounded-xl bg-slate-950 px-4 py-2 font-bold text-white">Siguiente</button></div></div><p id="preguntaTexto" class="mt-6 text-xl font-bold leading-relaxed"></p><div id="opciones" class="mt-6 grid gap-3"></div><div id="resultado" class="mt-6 hidden rounded-2xl p-5"></div></div>
-          <div id="vistaFinal" class="hidden text-center"><div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-5xl">✅</div><h2 class="text-3xl font-black">Sesión finalizada</h2><p id="resumenFinal" class="mx-auto mt-3 max-w-2xl text-slate-600"></p><button id="btnVolverPlan" class="mt-6 rounded-xl bg-sky-600 px-6 py-3 font-black text-white">Volver al plan</button></div>
-        </section>
-      </div>
-    </section>
-  </main>
-  <script src="preguntas.js"></script>
-  <script>
-    const $=id=>document.getElementById(id);
-    const HIST='capacitacion_historico_v6', CFG='capacitacion_config_v6';
-    const NUM=50, TESTS=20, SIM_Q=200, SIM_SEC=90*60;
-    const hoyISO=()=>new Date().toISOString().slice(0,10);
-    const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
-    const iso=d=>new Date(d).toISOString().slice(0,10);
-    const diasEntre=(a,b)=>Math.ceil((new Date(b)-new Date(a))/(86400000));
-    const formatoFecha=s=>new Date(s).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const dur=s=>{const m=Math.floor(s/60),r=s%60;return `${m}m ${String(r).padStart(2,'0')}s`};
-    let temas=[], porTema={}, nombresTema={}, estado={test:[],indice:0,respuestas:{},aciertos:0,fallos:0,timer:null,modo:null};
-    function leerH(){try{return JSON.parse(localStorage.getItem(HIST)||'[]')}catch{return []}}
-    function escH(h){localStorage.setItem(HIST,JSON.stringify(h))}
-    function leerCfg(){try{return JSON.parse(localStorage.getItem(CFG)||'null')}catch{return null}}
-    function escCfg(c){localStorage.setItem(CFG,JSON.stringify(c))}
-    function media(arr){return arr.length?Math.round(arr.reduce((s,r)=>s+(r.porcentaje||0),0)/arr.length):0}
-    function calcularNota(aciertos, fallos){return Math.max(0, Number((aciertos - fallos*0.5).toFixed(2)))}
-    function fmtNota(n){return Number(n||0).toFixed(2).replace('.',',')}
-    function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h+= (h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)}return h>>>0}
-    function rng(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=Math.imul(t^t>>>15,1|t);x^=x+Math.imul(x^x>>>7,61|x);return((x^x>>>14)>>>0)/4294967296}}
-    function shuffle(a,seed){const arr=[...a],r=rng(seed);for(let i=arr.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
-    function initDatos(){porTema={}; for(const p of window.PREGUNTAS){(porTema[p.tema] ||= []).push(p)} temas=Object.keys(porTema).sort(); nombresTema=Object.fromEntries(temas.map(t=>[t,`Tema ${t}`])); $('totalPreguntas').textContent=window.PREGUNTAS.length;}
-    function defaultCfg(){const inicio=hoyISO(); const examen='2026-11-01'; const dominio='2026-10-01'; return {inicio,examen,dominio,minutos:60,objetivo:90,diasSemana:6};}
-    function mostrarWizard(){const c=defaultCfg(); $('cfgInicio').value=c.inicio; $('cfgExamen').value=c.examen; $('cfgDominio').value=c.dominio; $('cfgMinutos').value=c.minutos; $('cfgObjetivo').value=c.objetivo; $('cfgDiasSemana').value=c.diasSemana; $('wizard').classList.remove('hidden'); $('app').classList.add('hidden')}
-    function guardarCfgDesde(prefix){const c={inicio:$(prefix+'Inicio').value,examen:$(prefix+'Examen').value,dominio:$(prefix+'Dominio').value,minutos:Number($(prefix+'Minutos').value),objetivo:Number($(prefix+'Objetivo').value),diasSemana:Number($(prefix+'DiasSemana').value)}; if(!c.inicio||!c.examen||!c.dominio) return alert('Completa las fechas.'); if(new Date(c.examen)<=new Date(c.inicio)) return alert('La fecha de examen debe ser posterior al inicio.'); if(new Date(c.dominio)<=new Date(c.inicio)||new Date(c.dominio)>=new Date(c.examen)) return alert('La fecha de dominio debe estar entre inicio y examen.'); escCfg(c); arrancarApp();}
-    function arrancarApp(){const c=leerCfg(); $('wizard').classList.add('hidden'); $('app').classList.remove('hidden'); $('diasExamen').textContent=Math.max(0,diasEntre(new Date(),c.examen)); $('objetivoNota').textContent=c.objetivo+'%'; $('cabeceraSub').textContent=`Preparación del ${c.inicio} al ${c.examen}. Meta: temario dominado antes del ${c.dominio}.`; cargarConfigEnEdicion(c); llenarSelects(); bind(); renderPlan(); renderHistorico(); resumenRapido(); mostrarModo('plan')}
-    function cargarConfigEnEdicion(c){$('editInicio').value=c.inicio;$('editExamen').value=c.examen;$('editDominio').value=c.dominio;$('editMinutos').value=c.minutos;$('editObjetivo').value=c.objetivo;$('editDiasSemana').value=c.diasSemana}
-    function llenarSelects(){ $('temaSelect').innerHTML=temas.map(t=>`<option value="${t}">${nombresTema[t]} (${porTema[t].length} preguntas)</option>`).join(''); $('testSelect').innerHTML=Array.from({length:TESTS},(_,i)=>`<option value="${i+1}">Test ${i+1}</option>`).join(''); actualizarDetalle(); }
-    function actualizarDetalle(){const t=$('temaSelect').value,n=Number($('testSelect').value); if(!t)return; const h=leerH().filter(r=>r.tema===t&&r.testNumero===n); $('testDetalle').textContent=h.length?`${h.length} intento(s) · mejor ${Math.max(...h.map(x=>x.porcentaje))}% · media ${media(h)}%`:'Sin intentos todavía'; renderDominioTema();}
-    function testFijo(t,n){return shuffle(porTema[t],hash(t+'-'+n)).slice(0,Math.min(NUM,porTema[t].length));}
-    function statsTest(t,n){const h=leerH().filter(r=>r.tema===t&&r.testNumero===n); return {intentos:h.length, media:media(h), mejor:h.length?Math.max(...h.map(r=>r.porcentaje)):0, ultimo:h[0]?.porcentaje??null}}
-    function todosTests(){let arr=[]; for(const t of temas) for(let n=1;n<=TESTS;n++) arr.push({tema:t,test:n, ...statsTest(t,n)}); return arr;}
-    function fase(c){const now=new Date(); if(now<new Date(c.dominio)) return 'Cobertura y dominio'; if(now<new Date(c.examen)) return 'Simulacros y consolidación'; return 'Examen realizado / mantenimiento';}
-    function diasEstudioEntre(a,b,cfg){let count=0; for(let d=new Date(a); d<=new Date(b); d=addDays(d,1)){const day=d.getDay(); const allowed=cfg.diasSemana===7 || (cfg.diasSemana===6 && day!==0) || (cfg.diasSemana===5 && day>=1 && day<=5); if(allowed) count++;} return count;}
-    function diagnostico(){const all=todosTests(), total=all.length, completados=all.filter(x=>x.intentos>0).length, debiles=all.filter(x=>x.intentos>0&&x.mejor<80), repetidos=all.filter(x=>x.intentos>=2).length; const h=leerH(); const simulacros=h.filter(r=>r.modo==='simulacro'); const mediaGlobal=media(h); const cobertura=Math.round(completados/total*100); const prep=Math.min(100,Math.round(cobertura*.45 + Math.min(100,repetidos/total*100)*.20 + Math.min(100,mediaGlobal)*.25 + Math.min(100,simulacros.length*8)*.10)); return {all,total,completados,cobertura,debiles,repetidos,h,simulacros,mediaGlobal,prep};}
-    function ordenBloques(){
-      // Secuencia pedagógica por bloques.
-      // Al principio NO mezclamos temas: primero se estudia un bloque completo,
-      // después se pasa al siguiente. El usuario pidió comenzar por E y luego B.
-      const preferidos=['1E','1B','1A','1C','1D','1F','1G','1H'];
-      const conocidos=preferidos.filter(t=>temas.includes(t));
-      const restantes=temas.filter(t=>!preferidos.includes(t)).sort();
-      return [...conocidos,...restantes];
-    }
-    function ordenPlanBase(all){
-      // Primera vuelta por bloques: todos los tests del bloque E, luego B,
-      // y después el resto de bloques. Así evitamos preguntas de temas aún no estudiados.
-      const map=new Map(all.map(x=>[`${x.tema}-${x.test}`,x]));
-      const arr=[];
-      for(const t of ordenBloques()) for(let n=1;n<=TESTS;n++){ const x=map.get(`${t}-${n}`); if(x) arr.push(x); }
-      return arr;
-    }
-    function indiceDiaEstudio(fecha,cfg){
-      // Número de días de estudio entre hoy y la fecha indicada, excluyendo hoy.
-      // Sirve para que el calendario futuro avance por el temario aunque todavía no exista histórico.
-      let count=0; const start=new Date(); start.setHours(0,0,0,0); const end=new Date(fecha); end.setHours(0,0,0,0);
-      for(let d=new Date(start); d<end; d=addDays(d,1)){
-        const day=d.getDay();
-        const estudia=cfg.diasSemana===7 || (cfg.diasSemana===6&&day!==0) || (cfg.diasSemana===5&&day>=1&&day<=5);
-        if(estudia) count++;
-      }
-      return count;
-    }
-    function recomendarTests(fecha=new Date()){
-      const cfg=leerCfg(), d=diagnostico(), f=fase(cfg);
-      const testsPorDia=Math.max(1,Math.floor(cfg.minutos/25));
-      const desplazamiento=indiceDiaEstudio(fecha,cfg)*testsPorDia;
-      const pendientes=ordenPlanBase(d.all).filter(x=>x.intentos===0);
-      const debiles=d.all.filter(x=>x.intentos>0 && x.mejor<80 && x.intentos<4).sort((a,b)=>a.mejor-b.mejor||a.intentos-b.intentos||a.tema.localeCompare(b.tema)||a.test-b.test);
-      const medios=d.all.filter(x=>x.intentos>0 && x.mejor>=80 && x.intentos<2).sort((a,b)=>a.intentos-b.intentos||a.mejor-b.mejor||a.tema.localeCompare(b.tema)||a.test-b.test);
-      let rec=[];
-      if(f==='Simulacros y consolidación'){
-        if(d.simulacros.length<3 || fecha.getDay()%3===0) rec.push({tipo:'simulacro',titulo:'Simulacro oficial',detalle:'200 preguntas · 90 minutos'});
-        const offsetDebil=Math.max(0,desplazamiento-rec.length) % Math.max(1,debiles.length||1);
-        rec.push(...debiles.slice(offsetDebil,offsetDebil+testsPorDia-rec.length).map(x=>({tipo:'test',tema:x.tema,test:x.test,titulo:`${x.tema} · Test ${x.test}`,detalle:`Débil: mejor ${x.mejor}% · ${x.intentos} intento(s)`})));
-      } else {
-        rec.push(...pendientes.slice(desplazamiento,desplazamiento+testsPorDia).map(x=>({tipo:'test',tema:x.tema,test:x.test,titulo:`${x.tema} · Test ${x.test}`,detalle:'Primera vuelta: completar cobertura'})));
-        if(rec.length<testsPorDia) rec.push(...debiles.slice(0,testsPorDia-rec.length).map(x=>({tipo:'test',tema:x.tema,test:x.test,titulo:`${x.tema} · Test ${x.test}`,detalle:`Repetición prioritaria: mejor ${x.mejor}%`})));
-        if(rec.length<testsPorDia) rec.push(...medios.slice(0,testsPorDia-rec.length).map(x=>({tipo:'test',tema:x.tema,test:x.test,titulo:`${x.tema} · Test ${x.test}`,detalle:'Consolidación segunda vuelta'})));
-      }
-      if(!rec.length) rec=[{tipo:'simulacro',titulo:'Simulacro oficial',detalle:'Temario cubierto: toca asegurar'}];
-      return rec;
-    }
-    function renderPlan(){const cfg=leerCfg(), d=diagnostico(), rec=recomendarTests(), completadoHoy=planDiaCompletado(); $('prepTop').textContent=d.prep+'%'; $('planPreparacion').textContent=d.prep+'%'; $('planCobertura').textContent=d.cobertura+'%'; $('planFase').textContent=fase(cfg); $('planTrabajo').textContent=rec.length; const diasDom=Math.max(0,diasEntre(new Date(),cfg.dominio)), diasExam=Math.max(0,diasEntre(new Date(),cfg.examen)); $('planSubtitulo').textContent=`Quedan ${diasDom} días hasta la meta de dominio (${cfg.dominio}) y ${diasExam} días hasta el examen (${cfg.examen}).`; $('sesionHoy').innerHTML=completadoHoy?`<div class="rounded-2xl bg-emerald-50 p-5 ring-1 ring-emerald-100"><p class="text-xl font-black text-emerald-800">✅ Plan del día completado</p><p class="mt-1 text-sm text-emerald-900">Ya has hecho la sesión prevista. Ahora puedes seguir con Extra Track sin presión.</p></div><div class="rounded-2xl border border-slate-200 bg-white p-5"><h4 class="text-lg font-black">Extra Track</h4><div class="mt-4 grid gap-3">${rec.map((r,i)=>`<div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"><div><p class="font-black">Extra ${i+1}. ${r.titulo}</p><p class="text-sm text-slate-500">${r.detalle}</p></div><button class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white" onclick="${r.tipo==='simulacro'?'iniciarSimulacro()':`iniciarTest('${r.tema}',${r.test},'plan')`}">Hacer extra</button></div>`).join('')}<button onclick="mostrarModo('errores')" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-left font-bold text-rose-700">🎯 Repasar mis errores / no contestadas</button></div></div>`:rec.map((r,i)=>`<div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-4"><div><p class="font-black">${i+1}. ${r.titulo}</p><p class="text-sm text-slate-500">${r.detalle}</p></div><button class="rounded-xl bg-slate-950 px-4 py-2 text-sm font-bold text-white" onclick="${r.tipo==='simulacro'?'iniciarSimulacro()':`iniciarTest('${r.tema}',${r.test},'plan')`}">Empezar</button></div>`).join(''); const est=diasEstudioEntre(new Date(),cfg.dominio,cfg); $('roadmap').innerHTML=[`<div class="rounded-2xl bg-sky-50 p-4 ring-1 ring-sky-100"><p class="font-black text-sky-800">Hasta ${cfg.dominio}</p><p class="mt-1 text-sm text-sky-900">Primera vuelta por bloques: E → B → resto. Después, repetir débiles 3-4 veces. Días útiles estimados: ${est}.</p></div>`,`<div class="rounded-2xl bg-amber-50 p-4 ring-1 ring-amber-100"><p class="font-black text-amber-800">Del dominio al examen</p><p class="mt-1 text-sm text-amber-900">Simulacros reales, fallos y estabilidad de notas.</p></div>`,`<div class="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100"><p class="font-black text-emerald-800">Estado actual</p><p class="mt-1 text-sm text-emerald-900">${d.completados}/${d.total} tests vistos · ${d.debiles.length} débiles · ${d.simulacros.length} simulacros.</p></div>`].join(''); renderCalendario();}
-    function renderCalendario(){const cfg=leerCfg(); let rows=[]; for(let i=0;i<14;i++){const f=addDays(new Date(),i), day=f.getDay(); const estudia=cfg.diasSemana===7 || (cfg.diasSemana===6&&day!==0) || (cfg.diasSemana===5&&day>=1&&day<=5); const rec=estudia?recomendarTests(f):[]; rows.push(`<div class="grid grid-cols-[110px,1fr] gap-3 rounded-xl ${estudia?'bg-slate-50':'bg-slate-100 opacity-60'} px-4 py-3"><span class="font-bold text-slate-700">${f.toLocaleDateString('es-ES',{weekday:'short',day:'2-digit',month:'2-digit'})}</span><span class="text-sm text-slate-600">${estudia?rec.map(r=>r.titulo).join(' · '):'Descanso'}</span></div>`)} $('calendarioPlan').innerHTML=rows.join('')}
-    function bind(){ if(window._bound)return; window._bound=true; $('btnGuardarConfig').onclick=()=>guardarCfgDesde('cfg'); $('btnActualizarConfig').onclick=()=>guardarCfgDesde('edit'); $('btnResetConfig').onclick=()=>{if(confirm('¿Reiniciar configuración? No borra histórico.')){localStorage.removeItem(CFG); location.reload()}}; $('btnModoPlan').onclick=()=>mostrarModo('plan'); $('btnModoTema').onclick=()=>mostrarModo('tema'); $('btnModoSimulacro').onclick=()=>mostrarModo('simulacro'); $('btnModoHistorico').onclick=()=>mostrarModo('historico'); $('btnModoErrores').onclick=()=>mostrarModo('errores'); $('btnModoConfig').onclick=()=>mostrarModo('config'); $('temaSelect').onchange=actualizarDetalle; $('testSelect').onchange=actualizarDetalle; $('btnNuevoTest').onclick=()=>iniciarTest($('temaSelect').value,Number($('testSelect').value),'tema'); $('btnRecalcularPlan').onclick=renderPlan; $('btnIniciarSimulacro').onclick=iniciarSimulacro; $('btnAnterior').onclick=anterior; $('btnSiguiente').onclick=siguiente; $('btnVolverPlan').onclick=()=>mostrarModo('plan'); $('btnBorrarHistorico').onclick=borrarHistorico; document.addEventListener('keydown',teclado); }
-    function mostrarModo(m){clearInterval(estado.timer); $('temporizador').classList.add('hidden'); ['vistaPlan','vistaTema','vistaSimulacro','vistaHistorico','vistaErrores','vistaConfig','vistaTest','vistaFinal'].forEach(id=>$(id).classList.add('hidden')); $('panelTema').classList.toggle('hidden',m!=='tema'); const map={plan:'vistaPlan',tema:'vistaTema',simulacro:'vistaSimulacro',historico:'vistaHistorico',errores:'vistaErrores',config:'vistaConfig'}; $(map[m]).classList.remove('hidden'); document.querySelectorAll('.modo').forEach(b=>b.className='modo rounded-xl border border-slate-300 bg-white px-4 py-3 text-left font-bold text-slate-700'); const btn={plan:'btnModoPlan',tema:'btnModoTema',simulacro:'btnModoSimulacro',historico:'btnModoHistorico',errores:'btnModoErrores',config:'btnModoConfig'}[m]; $(btn).className='modo rounded-xl bg-slate-950 px-4 py-3 text-left font-bold text-white'; if(m==='plan')renderPlan(); if(m==='historico')renderHistorico(); if(m==='errores')renderErrores(); if(m==='tema')renderDominioTema();}
-    window.iniciarTest=function(tema,test,modo){estado.test=testFijo(tema,test); estado.tema=tema; estado.testNumero=test; empezar(modo)};
-    window.iniciarSimulacro=function(){if(!confirm('Iniciar simulacro de 200 preguntas con 90 minutos?'))return; estado.test=shuffle(window.PREGUNTAS,Date.now()).slice(0,SIM_Q); estado.tema='TODOS'; estado.testNumero=null; empezar('simulacro'); estado.fin=Date.now()+SIM_SEC*1000; $('temporizador').classList.remove('hidden'); estado.timer=setInterval(timer,1000); timer()}
-    function empezar(modo){clearInterval(estado.timer); Object.assign(estado,{modo,indice:0,respuestas:{},aciertos:0,fallos:0,inicio:new Date(),guardado:false}); ['vistaPlan','vistaTema','vistaSimulacro','vistaHistorico','vistaConfig','vistaFinal'].forEach(id=>$(id).classList.add('hidden')); $('panelTema').classList.add('hidden'); $('vistaTest').classList.remove('hidden'); renderPregunta(); stats();}
-    function timer(){const rest=Math.max(0,Math.ceil((estado.fin-Date.now())/1000)); const m=Math.floor(rest/60),s=rest%60; $('temporizador').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; if(rest<=0){clearInterval(estado.timer); finalizar()}}
-    function renderPregunta(){const p=estado.test[estado.indice]; const r=estado.respuestas[p.codigo]; $('metaPregunta').textContent=`${estado.modo==='simulacro'?'Simulacro real':estado.modo==='plan'?'Plan de hoy':estado.modo==='repaso'?'Repaso inteligente':'Test fijo'} · Pregunta ${estado.indice+1} de ${estado.test.length} · ${p.tema}`; $('codigoPregunta').textContent=p.codigo; $('preguntaTexto').textContent=p.pregunta; $('opciones').innerHTML=Object.entries(p.opciones).map(([l,t])=>{const ok=p.solucion===l, sel=r===l; let c='border-slate-200 bg-white hover:border-sky-400 hover:bg-sky-50'; if(r){ if(ok)c='border-emerald-400 bg-emerald-50'; else if(sel)c='border-rose-400 bg-rose-50'; else c='border-slate-200 bg-white opacity-70'} return `<button class="opcion flex w-full gap-4 rounded-2xl border p-4 text-left transition ${c}" data-l="${l}" ${r?'disabled':''}><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white">${l}</span><span class="font-semibold leading-relaxed text-slate-800">${t}</span></button>`}).join(''); document.querySelectorAll('.opcion').forEach(b=>b.onclick=()=>responder(b.dataset.l)); if(r){const ok=r===p.solucion; $('resultado').className=`mt-6 rounded-2xl p-5 ${ok?'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200':'bg-rose-50 text-rose-900 ring-1 ring-rose-200'}`; $('resultado').innerHTML=`<p class="text-lg font-black">${ok?'✅ Correcto':'❌ Incorrecto'}</p><p class="mt-2 font-semibold">Respuesta correcta: <span class="font-black">${p.solucion}</span> — ${p.opciones[p.solucion]}</p>${p.norma?`<p class="mt-2 text-sm opacity-80">Norma: ${p.norma}</p>`:''}`;} else {$('resultado').className='mt-6 hidden rounded-2xl p-5'; $('resultado').innerHTML=''} $('btnAnterior').disabled=estado.indice===0; $('btnSiguiente').textContent=estado.indice===estado.test.length-1?'Finalizar':'Siguiente';}
-    function responder(l){const p=estado.test[estado.indice]; if(estado.respuestas[p.codigo])return; estado.respuestas[p.codigo]=l; l===p.solucion?estado.aciertos++:estado.fallos++; renderPregunta(); stats();}
-    function siguiente(){ if(estado.indice<estado.test.length-1){estado.indice++;renderPregunta();stats()} else finalizar() }
-    function anterior(){if(estado.indice>0){estado.indice--;renderPregunta();stats()}}
-    function stats(){const r=Object.keys(estado.respuestas).length,total=estado.test.length||NUM,pct=r?Math.round(estado.aciertos/r*100):0, nota=calcularNota(estado.aciertos,estado.fallos); $('aciertos').textContent=estado.aciertos; $('fallos').textContent=estado.fallos; $('notaActual').textContent=fmtNota(nota); $('progresoTexto').textContent=`${r}/${total}`; $('barraProgreso').style.width=`${r/total*100}%`; $('porcentaje').textContent=r?`Porcentaje actual: ${pct}% · Nota ponderada: ${fmtNota(nota)} puntos`:'Empieza un test para ver tu porcentaje.';}
-    function finalizar(){clearInterval(estado.timer);$('temporizador').classList.add('hidden'); const resp=Object.keys(estado.respuestas).length,total=estado.test.length,pct=resp?Math.round(estado.aciertos/resp*100):0, nota=calcularNota(estado.aciertos,estado.fallos); if(!estado.guardado){estado.guardado=true; const fin=new Date(), reg={id:Date.now()+'',fecha:fin.toISOString(),modo:estado.modo,tema:estado.tema,testNumero:estado.testNumero,aciertos:estado.aciertos,fallos:estado.fallos,respondidas:resp,total,porcentaje:pct,nota:nota,duracionSeg:Math.max(0,Math.round((fin-estado.inicio)/1000)),detalle:estado.test.map(p=>({codigo:p.codigo,tema:p.tema,pregunta:p.pregunta,opciones:p.opciones,solucion:p.solucion,norma:p.norma||'',respuesta:estado.respuestas[p.codigo]||null,estado:estado.respuestas[p.codigo]?(estado.respuestas[p.codigo]===p.solucion?'correcta':'fallada'):'no_contestada'}))}; const h=leerH(); h.unshift(reg); escH(h);} $('resumenFinal').innerHTML=`Has respondido <strong>${resp}</strong> de <strong>${total}</strong>. Resultado: <strong class="text-emerald-700">${estado.aciertos} aciertos</strong>, <strong class="text-rose-700">${estado.fallos} fallos</strong>, <strong>${pct}%</strong> y <strong class="text-indigo-700">nota ponderada ${fmtNota(nota)} puntos</strong>.`; ['vistaTest'].forEach(id=>$(id).classList.add('hidden')); $('vistaFinal').classList.remove('hidden'); renderPlan(); renderHistorico(); renderErrores(); resumenRapido(); actualizarDetalle();}
-    function resumenRapido(){const h=leerH(); if(!h.length){$('historicoResumen').textContent='Todavía no hay tests guardados.';$('graficoEvolucion').innerHTML='<div class="flex h-full w-full items-center justify-center text-xs font-semibold text-slate-400">Sin datos</div>';return} $('historicoResumen').textContent=`${h.length} sesión(es) · media ${media(h)}% · último ${h[0].porcentaje}% · nota ${fmtNota(h[0].nota ?? calcularNota(h[0].aciertos,h[0].fallos))}`; $('graficoEvolucion').innerHTML=h.slice(0,10).reverse().map(r=>`<div class="flex flex-1 flex-col items-center justify-end gap-1"><div class="w-full rounded-t bg-sky-500" style="height:${Math.max(6,r.porcentaje)}%"></div><span class="text-[10px] font-bold text-slate-500">${r.porcentaje}</span></div>`).join('')}
-    function renderHistorico(){const h=leerH(); const grupos=new Map(); h.forEach(r=>{const k=r.modo==='simulacro'?'SIM':`${r.tema}-${r.testNumero}`; if(!grupos.has(k))grupos.set(k,{titulo:r.modo==='simulacro'?'Simulacros reales':`${r.tema} · Test ${r.testNumero}`,lista:[]}); grupos.get(k).lista.push(r)}); $('tarjetasHistorico').innerHTML=grupos.size?[...grupos.values()].map(g=>`<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p class="text-sm font-black text-slate-800">${g.titulo}</p><p class="mt-3 text-3xl font-black text-sky-700">${media(g.lista)}%</p><p class="mt-1 text-xs font-semibold text-slate-500">${g.lista.length} intento(s) · mejor ${Math.max(...g.lista.map(r=>r.porcentaje))}% · mejor nota ${fmtNota(Math.max(...g.lista.map(r=>r.nota ?? calcularNota(r.aciertos,r.fallos))))}</p></div>`).join(''):'<div class="col-span-full rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">Aún no hay resultados.</div>'; $('tablaHistorico').innerHTML=h.length?h.slice(0,250).map(r=>`<div class="grid grid-cols-6 gap-2 px-4 py-3 text-sm"><span class="font-semibold text-slate-700">${formatoFecha(r.fecha)}</span><span class="text-slate-600">${r.modo==='simulacro'?'Simulacro':`${r.tema} · Test ${r.testNumero}`}</span><span class="font-black ${r.porcentaje>=80?'text-emerald-700':'text-rose-700'}">${r.porcentaje}%</span><span class="font-black text-indigo-700">${fmtNota(r.nota ?? calcularNota(r.aciertos,r.fallos))}</span><span class="text-slate-600">${r.aciertos}/${r.total}</span><span class="text-slate-500">${dur(r.duracionSeg)}</span></div>`).join(''):'<div class="px-4 py-8 text-center text-slate-500">No hay registros todavía.</div>'}
-    function hoyKey(){return new Date().toISOString().slice(0,10)}
-    function sesionesHoy(modo=null){const h=leerH(); const k=hoyKey(); return h.filter(r=>(!modo||r.modo===modo) && (r.fecha||'').slice(0,10)===k)}
-    function planDiaCompletado(){const cfg=leerCfg(); const objetivo=Math.max(1,Math.floor(cfg.minutos/25)); return sesionesHoy('plan').length>=objetivo}
-    function preguntasConHistorial(){const mapa=new Map(); for(const r of leerH()){ for(const d of (r.detalle||[])){ if(d.estado==='fallada'||d.estado==='no_contestada'){ const prev=mapa.get(d.codigo); if(!prev || d.estado==='fallada') mapa.set(d.codigo,d); } } } return [...mapa.values()];}
-    function renderErrores(){const arr=preguntasConHistorial(); const falladas=arr.filter(x=>x.estado==='fallada'), pendientes=arr.filter(x=>x.estado==='no_contestada'); const temasUnicos=[...new Set(arr.map(x=>x.tema))].sort(); $('panelErrores').innerHTML=`<div class="grid gap-4 sm:grid-cols-3"><div class="rounded-2xl bg-rose-50 p-5 ring-1 ring-rose-100"><p class="text-sm font-bold text-rose-700">Falladas</p><p class="mt-2 text-4xl font-black text-rose-700">${falladas.length}</p></div><div class="rounded-2xl bg-amber-50 p-5 ring-1 ring-amber-100"><p class="text-sm font-bold text-amber-700">No contestadas</p><p class="mt-2 text-4xl font-black text-amber-700">${pendientes.length}</p></div><div class="rounded-2xl bg-sky-50 p-5 ring-1 ring-sky-100"><p class="text-sm font-bold text-sky-700">Temas afectados</p><p class="mt-2 text-4xl font-black text-sky-700">${temasUnicos.length}</p></div></div>${arr.length?`<div class="rounded-2xl border border-slate-200 bg-white p-5"><h3 class="text-xl font-black">Entrenamiento de recuperación</h3><div class="mt-4 flex flex-wrap gap-3"><button onclick="iniciarRepasoErrores('todas')" class="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Repasar todas aleatorias</button><button onclick="iniciarRepasoErrores('falladas')" class="rounded-xl bg-rose-600 px-5 py-3 font-bold text-white">Solo falladas</button><button onclick="iniciarRepasoErrores('no_contestadas')" class="rounded-xl bg-amber-500 px-5 py-3 font-bold text-white">Solo no contestadas</button></div><div class="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">${temasUnicos.map(t=>`<button onclick="iniciarRepasoErrores('tema','${t}')" class="rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-left font-bold hover:bg-white">${t}<span class="block text-xs font-semibold text-slate-500">${arr.filter(x=>x.tema===t).length} pregunta(s)</span></button>`).join('')}</div></div><div class="rounded-2xl border border-slate-200 bg-white p-5"><h3 class="text-xl font-black">Listado</h3><div class="mt-4 grid gap-3">${arr.slice(0,80).map(x=>`<div class="rounded-xl border border-slate-200 p-4"><p class="text-xs font-black uppercase ${x.estado==='fallada'?'text-rose-600':'text-amber-600'}">${x.tema} · ${x.estado==='fallada'?'Fallada':'No contestada'}</p><p class="mt-1 font-bold">${x.pregunta}</p><p class="mt-1 text-sm text-slate-500">Correcta: ${x.solucion} — ${x.opciones[x.solucion]}</p></div>`).join('')}</div></div>`:`<div class="rounded-2xl border border-dashed border-slate-300 p-8 text-center text-slate-500">Todavía no hay errores guardados en esta versión. Haz un test y vuelve aquí.</div>`}`;}
-    window.iniciarRepasoErrores=function(tipo,tema=null){let arr=preguntasConHistorial(); if(tipo==='falladas') arr=arr.filter(x=>x.estado==='fallada'); if(tipo==='no_contestadas') arr=arr.filter(x=>x.estado==='no_contestada'); if(tipo==='tema') arr=arr.filter(x=>x.tema===tema); if(!arr.length) return alert('No hay preguntas para repasar todavía.'); const cods=new Set(shuffle(arr,Date.now()).slice(0,Math.min(100,arr.length)).map(x=>x.codigo)); estado.test=window.PREGUNTAS.filter(p=>cods.has(p.codigo)); estado.tema=tema||'REPASO'; estado.testNumero=null; empezar('repaso');}
-    function dominioTema(t=$('temaSelect')?.value){if(!t)return 0; const h=leerH().filter(r=>r.tema===t || (r.detalle||[]).some(d=>d.tema===t)); let hechas=new Set(), ac=0, resp=0; for(const r of h){ if(r.tema===t && r.testNumero) hechas.add(r.testNumero); for(const d of (r.detalle||[]).filter(x=>x.tema===t)){ if(d.respuesta){resp++; if(d.estado==='correcta') ac++;} } } const cobertura=Math.min(100,Math.round(hechas.size/TESTS*100)); const precision=resp?Math.round(ac/resp*100):0; return Math.round(cobertura*.55 + precision*.45);}
-    function renderDominioTema(){const box=$('dominioTema'); if(!box) return; const t=$('temaSelect')?.value; if(!t){box.innerHTML='';return;} const d=dominioTema(t); const err=preguntasConHistorial().filter(x=>x.tema===t).length; box.innerHTML=`<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div><h3 class="text-xl font-black">Dominio estimado del ${t}</h3><p class="mt-1 text-sm text-slate-600">Combina cobertura de tests y aciertos reales. Irá mejorando a medida que hagas más sesiones.</p></div><div class="text-right"><p class="text-5xl font-black text-sky-700">${d}%</p><p class="text-xs font-bold text-slate-500">${err} pregunta(s) a recuperar</p></div></div><div class="mt-4 h-3 overflow-hidden rounded-full bg-slate-200"><div class="h-full rounded-full bg-sky-600" style="width:${d}%"></div></div><div class="mt-4 flex flex-wrap gap-3"><button onclick="iniciarRepasoErrores('tema','${t}')" class="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Repasar errores del tema</button><button onclick="iniciarTest('${t}',Math.floor(Math.random()*${TESTS})+1,'tema')" class="rounded-xl border border-slate-300 px-5 py-3 font-bold">Test aleatorio del tema</button></div>`;}
+        <div id="view-cases" class="hidden">
+          <h2 class="text-3xl font-black">Casos prácticos</h2>
+          <p class="mt-2 text-slate-600">Sesiones de 10 casos. Tiempo objetivo: 50 minutos.</p>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <label><span class="text-sm font-bold">Tema</span><select id="caseTopic" class="mt-2 w-full rounded-xl border px-4 py-3"></select></label>
+            <label><span class="text-sm font-bold">Sesión</span><select id="caseNumber" class="mt-2 w-full rounded-xl border px-4 py-3"></select></label>
+          </div>
+          <p id="caseInfo" class="mt-3 text-sm text-slate-500"></p>
+          <button id="startCases" class="mt-5 rounded-xl bg-violet-600 px-6 py-3 font-black text-white">Iniciar 10 casos · 50 min</button>
+        </div>
 
-    function borrarHistorico(){if(confirm('¿Borrar histórico?')){localStorage.removeItem(HIST);renderHistorico();renderPlan();resumenRapido();actualizarDetalle()}}
-    function teclado(e){if($('vistaTest').classList.contains('hidden'))return; const l=e.key.toUpperCase(); if(['A','B','C','D'].includes(l))responder(l); if(e.key==='ArrowRight')siguiente(); if(e.key==='ArrowLeft')anterior();}
-    function init(){initDatos(); bind(); const cfg=leerCfg(); if(!cfg) mostrarWizard(); else arrancarApp();}
-    init();
-  </script>
+        <div id="view-simulation" class="hidden">
+          <h2 class="text-3xl font-black">Simulacro oficial</h2>
+          <p class="mt-2 text-slate-600">200 preguntas tipo test + 4 casos prácticos · 2 horas.</p>
+          <div class="mt-5 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl bg-slate-50 p-5"><p class="text-sm font-bold text-slate-500">Preguntas</p><p class="text-3xl font-black">200</p></div>
+            <div class="rounded-2xl bg-slate-50 p-5"><p class="text-sm font-bold text-slate-500">Casos</p><p class="text-3xl font-black">4</p></div>
+            <div class="rounded-2xl bg-slate-50 p-5"><p class="text-sm font-bold text-slate-500">Tiempo</p><p class="text-3xl font-black">2 h</p></div>
+          </div>
+          <button id="startSimulation" class="mt-5 rounded-xl bg-amber-500 px-6 py-3 font-black text-white">Iniciar simulacro</button>
+        </div>
+
+        <div id="view-errors" class="hidden">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div><h2 class="text-3xl font-black">Mis errores</h2><p class="mt-2 text-slate-600">Preguntas falladas o dejadas sin responder.</p></div>
+            <div class="flex gap-2"><select id="errorTopic" class="rounded-xl border px-3 py-2"></select><button id="startErrors" class="rounded-xl bg-rose-600 px-4 py-2 font-black text-white">Repasar</button></div>
+          </div>
+          <div id="errorList" class="mt-5 grid gap-3"></div>
+        </div>
+
+        <div id="view-history" class="hidden">
+          <h2 class="text-3xl font-black">Histórico</h2>
+          <div id="historyList" class="mt-5 grid gap-3"></div>
+        </div>
+
+        <div id="view-settings" class="hidden">
+          <h2 class="text-3xl font-black">Configuración y seguridad</h2>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <label><span class="text-sm font-bold">Nombre</span><input id="editName" class="mt-2 w-full rounded-xl border px-4 py-3"></label>
+            <label><span class="text-sm font-bold">Fecha examen</span><input id="editExam" type="date" class="mt-2 w-full rounded-xl border px-4 py-3"></label>
+            <label><span class="text-sm font-bold">Minutos diarios</span><input id="editMinutes" type="number" min="20" max="300" class="mt-2 w-full rounded-xl border px-4 py-3"></label>
+            <label><span class="text-sm font-bold">Días/semana</span><select id="editDays" class="mt-2 w-full rounded-xl border px-4 py-3"><option>5</option><option>6</option><option>7</option></select></label>
+          </div>
+          <button id="saveSettings" class="mt-5 rounded-xl bg-sky-600 px-5 py-3 font-black text-white">Guardar</button>
+          <div class="mt-7 rounded-2xl border p-5">
+            <h3 class="text-xl font-black">Copia de seguridad</h3>
+            <p class="mt-2 text-sm text-slate-600">Exporta tus datos antes de cambiar de ordenador o borrar el navegador.</p>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button id="exportBackup" class="rounded-xl bg-slate-950 px-4 py-3 font-bold text-white">Exportar copia</button>
+              <label class="cursor-pointer rounded-xl border px-4 py-3 font-bold">Importar copia<input id="importBackup" type="file" accept=".json" class="hidden"></label>
+              <button id="resetData" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 font-bold text-rose-700">Borrar todos los datos</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-quiz" class="hidden">
+          <div class="flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div><p id="quizMeta" class="text-sm font-black uppercase tracking-wide text-sky-700"></p><p id="quizCode" class="mt-1 text-sm font-bold text-slate-500"></p></div>
+            <div class="flex items-center gap-2">
+              <span id="timer" class="timer-ok rounded-xl px-4 py-2 text-xl font-black">00:00</span>
+              <button id="prevQuestion" class="rounded-xl border px-3 py-2 font-bold">Anterior</button>
+              <button id="nextQuestion" class="rounded-xl bg-slate-950 px-3 py-2 font-bold text-white">Siguiente</button>
+            </div>
+          </div>
+          <p id="paceInfo" class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600"></p>
+          <p id="quizQuestion" class="mt-5 whitespace-pre-line text-xl font-bold leading-relaxed"></p>
+          <div id="quizOptions" class="mt-5 grid gap-3"></div>
+          <div id="quizFeedback" class="mt-5 hidden rounded-2xl p-5"></div>
+          <div class="mt-5"><div class="flex justify-between text-sm font-bold"><span>Progreso</span><span id="quizProgress">0/0</span></div><div class="mt-2 h-3 overflow-hidden rounded-full bg-slate-200"><div id="quizBar" class="bar h-full bg-sky-600" style="width:0%"></div></div></div>
+        </div>
+
+        <div id="view-final" class="hidden text-center">
+          <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-5xl">✅</div>
+          <h2 class="mt-5 text-3xl font-black">Sesión finalizada</h2>
+          <p id="finalSummary" class="mx-auto mt-3 max-w-2xl text-slate-600"></p>
+          <button id="backDashboard" class="mt-6 rounded-xl bg-sky-600 px-6 py-3 font-black text-white">Volver al dashboard</button>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<script src="data/preguntas.js"></script>
+<script src="data/casos_practicos.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const KEY='capacitacion_hito2_local_v1';
+const TODAY=()=>new Date().toISOString().slice(0,10);
+const THEMES=['1E','1B','1A','1C','1D','1F','1G','1H'];
+const DEFAULT={config:null,history:[],errors:{},daily:{},seen:{},streak:{last:null,count:0}};
+let db=load();
+let session={items:[],index:0,answers:{},ok:0,ko:0,start:0,duration:0,endAt:0,timer:null,type:'',topic:'',number:null,title:''};
+
+function load(){try{return Object.assign(structuredClone(DEFAULT),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return structuredClone(DEFAULT)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)}return h>>>0}
+function rng(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=Math.imul(t^t>>>15,1|t);x^=x+Math.imul(x^x>>>7,61|x);return((x^x>>>14)>>>0)/4294967296}}
+function shuffle(a,seed){const arr=[...a],r=rng(seed);for(let i=arr.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+function score(ok,ko){return Math.max(0,+(ok-ko*.5).toFixed(2))}
+function pct(ok,total){return total?Math.round(ok/total*100):0}
+function daysTo(s){return Math.max(0,Math.ceil((new Date(s)-new Date())/86400000))}
+function formatDuration(sec){const m=Math.floor(sec/60),s=sec%60;return `${m}m ${String(s).padStart(2,'0')}s`}
+function topicPool(type,topic){return (type==='case'?window.CASOS_PRACTICOS:window.PREGUNTAS).filter(x=>x.tema===topic)}
+function attempts(type,topic,number){return db.history.filter(r=>r.type===type&&r.topic===topic&&r.number===number).length}
+function fixedItems(type,topic,number,size){
+  const pool=topicPool(type,topic);
+  const round=attempts(type,topic,number);
+  const ordered=shuffle(pool,hash(`${type}-${topic}-coverage`));
+  const offset=((number-1)*size + round*20*size)%Math.max(1,pool.length);
+  const out=[];
+  for(let i=0;i<size;i++) out.push(ordered[(offset+i)%ordered.length]);
+  return out;
+}
+function passedTests(topic){return new Set(db.history.filter(r=>r.type==='test'&&r.topic===topic&&r.percentage>=60).map(r=>r.number)).size}
+function topicStats(topic){
+  const t=db.history.filter(r=>r.topic===topic&&r.type==='test');
+  const c=db.history.filter(r=>r.topic===topic&&r.type==='case');
+  const distinctTests=new Set(t.map(r=>r.number).filter(Boolean)).size;
+  const distinctCases=new Set(c.map(r=>r.number).filter(Boolean)).size;
+  const recentTests=t.slice(0,5);
+  const recentCases=c.slice(0,5);
+  const testDomain=recentTests.length?Math.round(recentTests.reduce((s,r)=>s+r.percentage,0)/recentTests.length):0;
+  const caseDomain=recentCases.length?Math.round(recentCases.reduce((s,r)=>s+r.percentage,0)/recentCases.length):0;
+  const testCoverage=Math.min(100,Math.round(distinctTests/20*100));
+  const caseCoverage=Math.min(100,Math.round(distinctCases/20*100));
+  return {testDomain,caseDomain,testCoverage,caseCoverage,passed:passedTests(topic),distinctTests,distinctCases};
+}
+function prep(){
+  const ts=THEMES.map(topicStats);
+  const coverage=Math.round(ts.reduce((s,x)=>s+x.testCoverage,0)/THEMES.length);
+  const domain=Math.round(ts.reduce((s,x)=>s+x.testDomain,0)/THEMES.length);
+  const cases=Math.round(ts.reduce((s,x)=>s+(x.caseCoverage*.5+x.caseDomain*.5),0)/THEMES.length);
+  const sims=db.history.filter(r=>r.type==='simulation');
+  const sim=sims.length?Math.round(sims.slice(0,5).reduce((s,r)=>s+r.percentage,0)/Math.min(5,sims.length)):0;
+  const timed=db.history.filter(r=>r.timeLimit);
+  const pace=timed.length?Math.round(timed.filter(r=>r.duration<=r.timeLimit).length/timed.length*100):0;
+  const index=Math.round(coverage*.4+domain*.3+cases*.2+sim*.1);
+  return {coverage,domain,cases,sim,pace,index};
+}
+function updateStreak(){
+  const today=TODAY(),last=db.streak.last;
+  if(last===today)return;
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  db.streak.count=last===yesterday.toISOString().slice(0,10)?(db.streak.count||0)+1:1;
+  db.streak.last=today;save();
+}
+function planToday(){
+  const active=THEMES.find(t=>passedTests(t)<20)||THEMES[THEMES.length-1];
+  const completedToday=db.history.filter(r=>r.date.slice(0,10)===TODAY());
+  const testsToday=completedToday.filter(r=>r.type==='test'&&r.topic===active).length;
+  const casesToday=completedToday.filter(r=>r.type==='case'&&r.topic===active).length;
+  const nextTest=Array.from({length:20},(_,i)=>i+1).find(n=>!db.history.some(r=>r.type==='test'&&r.topic===active&&r.number===n))||1;
+  const nextCase=Array.from({length:20},(_,i)=>i+1).find(n=>!db.history.some(r=>r.type==='case'&&r.topic===active&&r.number===n))||1;
+  const needCases=passedTests(active)>=10;
+  return {active,nextTest,nextCase,needCases,doneTest:testsToday>0,doneCase:!needCases||casesToday>0,complete:testsToday>0&&(!needCases||casesToday>0)};
+}
+function show(view){
+  clearInterval(session.timer);
+  document.querySelectorAll('[id^="view-"]').forEach(x=>x.classList.add('hidden'));
+  $(`view-${view}`).classList.remove('hidden');
+  document.querySelectorAll('.nav').forEach(b=>b.className='nav rounded-xl border bg-white px-4 py-3 text-left font-bold');
+  const b=document.querySelector(`[data-view="${view}"]`);if(b)b.className='nav rounded-xl bg-slate-950 px-4 py-3 text-left font-bold text-white';
+  if(view==='dashboard')renderDashboard();
+  if(view==='errors')renderErrors();
+  if(view==='history')renderHistory();
+}
+function renderDashboard(){
+  const p=prep(),pl=planToday(),cfg=db.config;
+  $('greeting').textContent=`Buenos días, ${cfg.name} 👋`;
+  $('dashboardSub').textContent=`Quedan ${daysTo(cfg.exam)} días para el examen. Plan activo: Tema ${pl.active}.`;
+  $('prepIndex').textContent=p.index;$('topPrep').textContent=p.index+'%';
+  $('dashTest').textContent=p.domain+'%';$('dashCases').textContent=p.cases+'%';$('dashSims').textContent=db.history.filter(r=>r.type==='simulation').length;
+  $('dashPace').textContent=p.pace?p.pace+'%':'—';$('dashErrors').textContent=Object.keys(db.errors).length;
+  $('streak').textContent=`${db.streak.count||0} días`;
+  $('todayStatus').textContent=pl.complete?'Plan completado':'En progreso';
+  const items=[
+    {done:pl.doneTest,title:`${pl.active} · Test ${pl.nextTest}`,detail:'50 preguntas · 20 minutos',action:`startDirect('test','${pl.active}',${pl.nextTest})`},
+    ...(pl.needCases?[{done:pl.doneCase,title:`${pl.active} · Casos ${pl.nextCase}`,detail:'10 casos · 50 minutos',action:`startDirect('case','${pl.active}',${pl.nextCase})`}]:[])
+  ];
+  $('todayPlan').innerHTML=items.map(i=>`<div class="flex items-center justify-between rounded-2xl border ${i.done?'bg-emerald-50':'bg-slate-50'} p-4"><div><p class="font-black">${i.done?'✅':'🎯'} ${i.title}</p><p class="text-sm text-slate-500">${i.detail}</p></div><button ${i.done?'disabled':''} onclick="${i.action}" class="rounded-xl ${i.done?'bg-emerald-200 text-emerald-800':'bg-slate-950 text-white'} px-4 py-2 font-bold">${i.done?'Hecho':'Empezar'}</button></div>`).join('');
+  $('extraTrack').classList.toggle('hidden',!pl.complete);
+  $('extraItems').innerHTML=`<button onclick="startErrorReview('${pl.active}')" class="rounded-xl bg-white px-4 py-3 text-left font-bold ring-1 ring-amber-200">❌ Repaso de errores del tema</button><button onclick="startRandomTopic('${pl.active}')" class="rounded-xl bg-white px-4 py-3 text-left font-bold ring-1 ring-amber-200">🎲 Test sorpresa de 50 preguntas</button>`;
+  $('coachMessage').textContent=pl.complete?'Has cumplido el plan. El Extra Track es opcional: úsalo para reforzar errores o ganar cobertura.':pl.needCases?`Ya has aprobado 10 tests de ${pl.active}. Desde ahora combinaremos test y casos prácticos.`:`Concéntrate en ${pl.active}. Los casos prácticos se activarán al aprobar 10 tests distintos de este tema.`;
+  $('topicProgress').innerHTML=THEMES.map(t=>{const s=topicStats(t);return `<div class="rounded-2xl border bg-slate-50 p-4"><div class="flex justify-between gap-3 text-sm font-bold"><span>${t} · ${s.distinctTests}/20 tests realizados</span><span>Dominio ${s.testDomain}%</span></div><div class="mt-3 grid gap-2"><div><div class="flex justify-between text-xs text-slate-500"><span>Cobertura</span><span>${s.testCoverage}%</span></div><div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200"><div class="bar h-full bg-sky-500" style="width:${s.testCoverage}%"></div></div></div><div><div class="flex justify-between text-xs text-slate-500"><span>Dominio (últimos 5)</span><span>${s.testDomain}%</span></div><div class="mt-1 h-2 overflow-hidden rounded-full bg-slate-200"><div class="bar h-full bg-indigo-500" style="width:${s.testDomain}%"></div></div></div></div></div>`}).join('');
+  $('topDays').textContent=daysTo(cfg.exam);
+}
+function updateSelectInfo(){
+  const t=$('testTopic').value,n=+$('testNumber').value;
+  const h=db.history.filter(r=>r.type==='test'&&r.topic===t&&r.number===n);
+  $('testInfo').textContent=h.length?`${h.length} intento(s) · mejor ${Math.max(...h.map(x=>x.percentage))}%`:`Sin intentos · ${topicPool('test',t).length} preguntas disponibles`;
+  const ct=$('caseTopic').value,cn=+$('caseNumber').value;
+  const ch=db.history.filter(r=>r.type==='case'&&r.topic===ct&&r.number===cn);
+  $('caseInfo').textContent=ch.length?`${ch.length} intento(s) · mejor ${Math.max(...ch.map(x=>x.percentage))}%`:`Sin intentos · ${topicPool('case',ct).length} casos disponibles`;
+}
+function start(type,topic,number,items,duration,title){
+  Object.assign(session,{items,index:0,answers:{},ok:0,ko:0,start:Date.now(),duration,endAt:Date.now()+duration*1000,type,topic,number,title});
+  show('quiz');$('view-quiz').classList.remove('hidden');
+  session.timer=setInterval(tick,1000);tick();renderQuestion();updateSessionStats();
+}
+window.startDirect=(type,topic,number)=>{
+  const isCase=type==='case';start(type,topic,number,fixedItems(type,topic,number,isCase?10:50),isCase?3000:1200,`${topic} · ${isCase?'Casos':'Test'} ${number}`);
+};
+window.startRandomTopic=topic=>start('test',topic,null,shuffle(topicPool('test',topic),Date.now()).slice(0,50),1500,`${topic} · Test sorpresa`);
+window.startErrorReview=topic=>{
+  const ids=Object.values(db.errors).filter(e=>!topic||topic==='TODOS'||e.topic===topic).map(e=>e.code);
+  const all=[...window.PREGUNTAS,...window.CASOS_PRACTICOS].filter(x=>ids.includes(x.codigo));
+  if(!all.length)return alert('No hay errores para repasar con este filtro.');
+  start('errors',topic||'TODOS',null,shuffle(all,Date.now()).slice(0,Math.min(50,all.length)),Math.min(1200,all.length*24),'Repaso de errores');
+}
+function tick(){
+  const left=Math.max(0,Math.ceil((session.endAt-Date.now())/1000)),m=Math.floor(left/60),s=left%60;
+  $('timer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  $('timer').className=`rounded-xl px-4 py-2 text-xl font-black ${left<=120?'timer-danger':left<=600?'timer-warn':'timer-ok'}`;
+  const expected=session.duration/session.items.length,elapsed=(Date.now()-session.start)/1000,target=(session.index+1)*expected,diff=Math.round(target-elapsed);
+  $('paceInfo').textContent=diff>=0?`🎯 Vas ${diff} segundos por delante del ritmo objetivo.`:`⚠️ Vas ${Math.abs(diff)} segundos por detrás del ritmo objetivo.`;
+  if(left<=0)finish(true);
+}
+function renderQuestion(){
+  const q=session.items[session.index],ans=session.answers[q.codigo];
+  $('quizMeta').textContent=`${session.title} · ${session.index+1}/${session.items.length}`;$('quizCode').textContent=q.codigo;$('quizQuestion').textContent=q.pregunta;
+  $('quizOptions').innerHTML=Object.entries(q.opciones).map(([l,t])=>{let c='border-slate-200 bg-white hover:border-sky-400 hover:bg-sky-50';if(ans){if(l===q.solucion)c='border-emerald-400 bg-emerald-50';else if(l===ans)c='border-rose-400 bg-rose-50';else c+=' opacity-60'}return `<button class="answer flex gap-4 rounded-2xl border p-4 text-left ${c}" data-l="${l}" ${ans?'disabled':''}><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-white">${l}</span><span class="whitespace-pre-line font-semibold">${t}</span></button>`}).join('');
+  document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>answer(b.dataset.l));
+  if(ans){const good=ans===q.solucion;$('quizFeedback').className=`mt-5 rounded-2xl p-5 ${good?'bg-emerald-50 text-emerald-900':'bg-rose-50 text-rose-900'}`;$('quizFeedback').innerHTML=`<p class="font-black">${good?'✅ Correcto':'❌ Incorrecto'}</p><p class="mt-2">Respuesta correcta: <strong>${q.solucion}</strong></p>${q.norma?`<p class="mt-2 text-sm">${q.norma}</p>`:''}`}else{$('quizFeedback').className='mt-5 hidden rounded-2xl p-5'}
+  $('prevQuestion').disabled=session.index===0;$('nextQuestion').textContent=session.index===session.items.length-1?'Finalizar':'Siguiente';
+}
+function answer(letter){
+  const q=session.items[session.index];if(session.answers[q.codigo])return;
+  session.answers[q.codigo]=letter;
+  if(letter===q.solucion){session.ok++;delete db.errors[q.codigo]}else{session.ko++;db.errors[q.codigo]={code:q.codigo,topic:q.tema,type:session.type,last:TODAY()}}
+  save();renderQuestion();updateSessionStats();
+}
+function updateSessionStats(){
+  $('statOk').textContent=session.ok;$('statKo').textContent=session.ko;$('statScore').textContent=String(score(session.ok,session.ko)).replace('.',',');
+  const n=Object.keys(session.answers).length;$('quizProgress').textContent=`${n}/${session.items.length}`;$('quizBar').style.width=`${n/session.items.length*100}%`;
+}
+function next(){if(session.index<session.items.length-1){session.index++;renderQuestion()}else finish(false)}
+function finish(timeout){
+  if(!session.items.length)return;clearInterval(session.timer);
+  const unanswered=session.items.filter(q=>!session.answers[q.codigo]);
+  unanswered.forEach(q=>db.errors[q.codigo]={code:q.codigo,topic:q.tema,type:session.type,last:TODAY(),unanswered:true});
+  const duration=Math.round((Date.now()-session.start)/1000),total=session.items.length,percentage=pct(session.ok,total);
+  db.history.unshift({id:Date.now(),date:new Date().toISOString(),type:session.type,topic:session.topic,number:session.number,title:session.title,ok:session.ok,ko:session.ko,unanswered:unanswered.length,total,percentage,score:score(session.ok,session.ko),duration,timeLimit:session.duration,timeout});
+  updateStreak();save();
+  $('view-quiz').classList.add('hidden');$('view-final').classList.remove('hidden');
+  $('finalSummary').innerHTML=`${timeout?'El tiempo se ha agotado. ':''}<strong>${session.ok} aciertos</strong>, <strong>${session.ko} fallos</strong>, <strong>${unanswered.length} sin responder</strong>, nota <strong>${String(score(session.ok,session.ko)).replace('.',',')}</strong> y tiempo <strong>${formatDuration(duration)}</strong>.`;
+  session.items=[];renderDashboard();
+}
+function renderErrors(){
+  const vals=Object.values(db.errors);$('errorList').innerHTML=vals.length?vals.slice(0,200).map(e=>`<div class="rounded-2xl border bg-slate-50 p-4"><p class="font-black">${e.code} · ${e.topic}</p><p class="text-sm text-slate-500">${e.unanswered?'Sin contestar':'Fallada'} · última vez ${e.last}</p></div>`).join(''):'<div class="rounded-2xl border border-dashed p-8 text-center text-slate-500">No tienes errores activos.</div>';
+}
+function renderHistory(){
+  $('historyList').innerHTML=db.history.length?db.history.slice(0,200).map(r=>`<div class="grid gap-2 rounded-2xl border bg-slate-50 p-4 sm:grid-cols-[1.5fr,.7fr,.7fr,.7fr]"><div><p class="font-black">${r.title}</p><p class="text-xs text-slate-500">${new Date(r.date).toLocaleString('es-ES')}</p></div><p class="font-black">${r.percentage}%</p><p>Nota ${String(r.score).replace('.',',')}</p><p>${formatDuration(r.duration)}</p></div>`).join(''):'<div class="rounded-2xl border border-dashed p-8 text-center text-slate-500">Todavía no hay sesiones.</div>';
+}
+function init(){
+  $('topQuestions').textContent=window.PREGUNTAS.length.toLocaleString('es-ES');$('topCases').textContent=window.CASOS_PRACTICOS.length.toLocaleString('es-ES');
+  const opts=THEMES.map(t=>`<option value="${t}">${t}</option>`).join('');$('testTopic').innerHTML=opts;$('caseTopic').innerHTML=opts;$('errorTopic').innerHTML='<option value="TODOS">Todos</option>'+opts;
+  $('testNumber').innerHTML=Array.from({length:20},(_,i)=>`<option value="${i+1}">Test ${i+1}</option>`).join('');$('caseNumber').innerHTML=Array.from({length:20},(_,i)=>`<option value="${i+1}">Sesión ${i+1}</option>`).join('');
+  if(!db.config){$('setup').classList.remove('hidden')}else{openApp()}
+}
+function openApp(){
+  $('setup').classList.add('hidden');$('app').classList.remove('hidden');$('headerSub').textContent=`Perfil local de ${db.config.name}. Datos guardados en este navegador.`;
+  $('editName').value=db.config.name;$('editExam').value=db.config.exam;$('editMinutes').value=db.config.minutes;$('editDays').value=db.config.days;
+  updateSelectInfo();show('dashboard');
+}
+$('saveSetup').onclick=()=>{db.config={name:$('cfgName').value.trim()||'Alumno',exam:$('cfgExam').value,minutes:+$('cfgMinutes').value,days:+$('cfgDays').value};save();openApp()}
+document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>show(b.dataset.view));
+$('showFormula').onclick=()=>$('formulaBox').classList.toggle('hidden');
+$('testTopic').onchange=updateSelectInfo;$('testNumber').onchange=updateSelectInfo;$('caseTopic').onchange=updateSelectInfo;$('caseNumber').onchange=updateSelectInfo;
+$('startTest').onclick=()=>startDirect('test',$('testTopic').value,+$('testNumber').value);
+$('startCases').onclick=()=>startDirect('case',$('caseTopic').value,+$('caseNumber').value);
+$('startSimulation').onclick=()=>{if(confirm('¿Iniciar simulacro de 2 horas?'))start('simulation','TODOS',null,[...shuffle(window.PREGUNTAS,Date.now()).slice(0,200),...shuffle(window.CASOS_PRACTICOS,Date.now()+1).slice(0,4)],7200,'Simulacro oficial 200 + 4')}
+$('startErrors').onclick=()=>startErrorReview($('errorTopic').value);
+$('prevQuestion').onclick=()=>{if(session.index>0){session.index--;renderQuestion()}};$('nextQuestion').onclick=next;
+$('backDashboard').onclick=()=>show('dashboard');
+$('saveSettings').onclick=()=>{db.config={name:$('editName').value.trim()||'Alumno',exam:$('editExam').value,minutes:+$('editMinutes').value,days:+$('editDays').value};save();openApp();alert('Configuración guardada.')}
+$('exportBackup').onclick=()=>{const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`capacitacion-backup-${TODAY()}.json`;a.click();URL.revokeObjectURL(a.href)}
+$('importBackup').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{db=JSON.parse(r.result);save();location.reload()}catch{alert('La copia no es válida.')}};r.readAsText(f)}
+$('resetData').onclick=()=>{if(confirm('¿Borrar todo el progreso local?')){localStorage.removeItem(KEY);location.reload()}}
+init();
+</script>
 </body>
 </html>
